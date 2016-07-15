@@ -11,11 +11,36 @@ if (!databaseUri) {
   console.log('DATABASE_URI not specified, falling back to localhost.');
 }
 
+var pushConfig = {}
+
+if (process.env.GCM_SENDER_ID && process.env.GCM_API_KEY) {
+    pushConfig['android'] = { senderId: process.env.GCM_SENDER_ID || '', // Sender ID of GCM
+                              apiKey: process.env.GCM_API_KEY || '' // Server API key of GCM
+                            };
+}
+
+if (process.env.APNS_ENABLE) {
+    pushConfig['ios'] = [
+      {
+        // reference https://github.com/codepath/parse-server-example/blob/master/index.js#L15-L26
+        // and https://github.com/ParsePlatform/Parse-Server/wiki/Push
+          pfx: '', // The filename of private key and certificate in PFX or PKCS12 format from disk
+          passphrase: '', // optional password to your p12
+          cert: '', // If not using the .p12 format, the path to the certificate PEM to load from disk
+          key: '', // If not using the .p12 format, the path to the private key PEM to load from disk
+          bundleId: '', // The bundle identifier associate with your app
+          production: false // Specifies which environment to connect to: Production (if true) or Sandbox
+      }
+    ]
+}
+
+
 var api = new ParseServer({
   databaseURI: databaseUri || 'mongodb://localhost:27017/dev',
   cloud: process.env.CLOUD_CODE_MAIN || __dirname + '/cloud/main.js',
   appId: process.env.APP_ID || 'myAppId',
   masterKey: process.env.MASTER_KEY || '', //Add your master key here. Keep it secret!
+  push: pushConfig,
   serverURL: process.env.SERVER_URL || 'http://localhost:1337/parse',  // Don't forget to change to https if needed
   liveQuery: {
     classNames: ["Posts", "Comments"] // List of classes to support for query subscriptions
