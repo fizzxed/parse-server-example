@@ -4,6 +4,27 @@
 var express = require('express');
 var ParseServer = require('parse-server').ParseServer;
 var path = require('path');
+var S3Adapter = require('parse-server-s3-adapter');
+
+// I'm bad a javascript so lol here I go
+function GetEnvironmentVar(varname, defaultvalue) {
+    var result = process.env[varname];
+    if(result!=undefined)
+        return result;
+    else
+        return defaultvalue;
+}
+
+var s3Adapter = new S3Adapter(
+        GetEnvironmentVar("S3_ACCESS_KEY", "DEFAULT_ACCESS"),
+        GetEnvironmentVar("S3_SECRET_KEY", "DEFUALT_SECRET"),
+        GetEnvironmentVar("S3_BUCKET", "DEFAULT_BUCKET"), {
+            region: 'us-west-1',
+            bucketPrefix: '',
+            directAccess: true
+            }
+        );
+
 
 var databaseUri = process.env.DATABASE_URI || process.env.MONGODB_URI;
 
@@ -41,7 +62,7 @@ var api = new ParseServer({
   appId: process.env.APP_ID || 'myAppId',
   masterKey: process.env.MASTER_KEY || '', //Add your master key here. Keep it secret!
   push: pushConfig,
-  filesAdapter: parse-server-s3-adapter,
+  filesAdapter: s3Adapter,
   serverURL: process.env.SERVER_URL || 'http://localhost:1337/parse',  // Don't forget to change to https if needed
   liveQuery: {
     classNames: ["Posts", "Comments"] // List of classes to support for query subscriptions
