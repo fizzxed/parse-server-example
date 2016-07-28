@@ -86,7 +86,7 @@ var mountPath = process.env.PARSE_MOUNT || '/parse';
 app.use(mountPath, api);
 
 // TODO: Delete this function after done testing
-Parse.Cloud.define('hello', function(req, res) {
+Parse.Cloud.define('hello2', function(req, res) {
     res.success('Hello from Clode Code on Node.');
 });
 
