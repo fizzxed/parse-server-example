@@ -5,6 +5,10 @@ var express = require('express');
 var ParseServer = require('parse-server').ParseServer;
 var path = require('path');
 var S3Adapter = require('parse-server-s3-adapter');
+var ParseCloud = reqiure('parse-cloud-express');
+var Parse = ParseCloud.Parse;
+require('./cloud/main.js'); // After this, ParseCloud.app will be configured in Express app
+var kue = require('kue'); // Node package for queueing jobs
 
 // I'm bad a javascript so lol here I go
 function GetEnvironmentVar(varname, defaultvalue) {
@@ -80,6 +84,14 @@ app.use('/public', express.static(path.join(__dirname, '/public')));
 // Serve the Parse API on the /parse URL prefix
 var mountPath = process.env.PARSE_MOUNT || '/parse';
 app.use(mountPath, api);
+
+// TODO: Delete this function after done testing
+Parse.Cloud.define('hello', function(req, res) {
+    res.success('Hello from Clode Code on Node.');
+});
+
+// Mount the Cloud Code routes on the main Express app at /webhooks/
+app.use('/webhooks', ParseCloud.app);
 
 // Parse Server plays nicely with the rest of your web routes
 app.get('/', function(req, res) {
