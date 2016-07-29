@@ -88,9 +88,9 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
                 }, error: function(error) {
                     console.log("PUSH ERROR: " + error.message);
                 }, useMasterKey: true});
-                response.success("success");
             }
         }
+        response.success("success");
     });
 });
 
