@@ -13,6 +13,7 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
         console.log("Getting Push stuff");
         // Only execute if user has push setting on
         if (hasPushOn === true) {
+            console.log(user.get("name") + " has push enabled");
             var hasExpired = [];
             var willExpire = [];
             // Current Date
@@ -32,6 +33,7 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
 
             foodQueryHasExpired.find({
                 success: function(results) {
+                             console.log("" + results.length);
                              for (var i = 0; i < results.length; i++) {
                                  var object = results[i].get("product_name");
                                  hasExpired.push(object);
@@ -44,6 +46,7 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
 
             foodQueryWillExpire.find({
                 success: function(results) {
+                             console.log("" + results.length);
                              for (var i = 0; i < results.length; i++) {
                                  var object = results[i].get("product_name");
                                  willExpire.push(object);
