@@ -61,24 +61,25 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
             });
             var message = "";
             if (hasExpired.length > 0) {
-                message += "Expired: ";
+                console.log("Adding hasExpired");
+                message = message + "Expired: ";
                 for (var i = 0; i < hasExpired.length - 1; i++) {
-                    message += hasExpired[i] + ", ";
+                    message = message + hasExpired[i] + ", ";
                 }
                 if (hasExpired.length > 1) {
-                    message += "and ";
+                    message = message + "and ";
                 }
-                message += hasExpired[hasExpired.length - 1] + ". ";
+                message = message + hasExpired[hasExpired.length - 1] + ". ";
             }
             if (willExpire.length > 0) {
-                message += "Expiring Soon: ";
+                message = message + "Expiring Soon: ";
                 for (var i = 0; i < willExpire.length - 1; i++) {
-                    message += willExpire[i] + ", ";
+                    message = message + willExpire[i] + ", ";
                 }
                 if (willExpire.length > 1) {
-                    message += "and ";
+                    message = message + "and ";
                 }
-                message += willExpire[willExpire.length - 1] + ". ";
+                message = message + willExpire[willExpire.length - 1] + ". ";
             }
             console.log("Message: " +  message);
             if (message !== "") {
