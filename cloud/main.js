@@ -80,7 +80,7 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
                 }
                 message += willExpire[willExpire.length - 1] + ". ";
             }
-            console.log("Message: " message);
+            console.log("Message: " +  message);
             if (message !== "") {
                 console.log("BEGIN SENDING PUSH");
                 var pushQuery = new Parse.Query(Parse.Installation);
