@@ -5,7 +5,7 @@ var express = require('express');
 var ParseServer = require('parse-server').ParseServer;
 var path = require('path');
 var S3Adapter = require('parse-server-s3-adapter');
-var ParseCloud = require('parse-cloud-express');
+var ParseCloud = reqiure('parse-cloud-express');
 var Parse = ParseCloud.Parse;
 require('./cloud/main.js'); // After this, ParseCloud.app will be configured in Express app
 var kue = require('kue'); // Node package for queueing jobs
