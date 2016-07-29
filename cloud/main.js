@@ -38,6 +38,7 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
                                  var object = results[i].get("product_name");
                                  console.log(object);
                                  hasExpired.push(object);
+                                 console.log("HasExpired Length: " + hasExpired.length);
                              }
                          },
                 error: function(error) {
