@@ -10,6 +10,7 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
     // For each user in database
     query.each(function(user) {
         var hasPushOn = user.get('push');
+        console.log("Getting Push stuff");
         // Only execute if user has push setting on
         if (hasPushOn === true) {
             var hasExpired = [];
@@ -52,7 +53,6 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
                            // Do nothing
                        }
             });
-
             var message = "";
             if (hasExpired.length > 0) {
                 message += "Expired: ";
@@ -64,7 +64,6 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
                 }
                 message += hasExpired[hasExpired.length - 1] + ". ";
             }
-
             if (willExpire.length > 0) {
                 message += "Expiring Soon: ";
                 for (var i = 0; i < willExpire.length - 1; i++) {
@@ -73,10 +72,8 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
                 if (willExpire.length > 1) {
                     message += "and ";
                 }
-
                 message += willExpire[willExpire.length - 1] + ". ";
             }
-
             if (message !== "") {
                 var pushQuery = new Parse.Query(Parse.Installation);
                 pushQuery.equalTo("deviceType", "android");
@@ -91,10 +88,9 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
                 }, error: function(error) {
                     console.log("PUSH ERROR: " + error.message);
                 }, useMasterKey: true});
-
                 response.success("success");
             }
-        };
+        }
     });
 });
 
