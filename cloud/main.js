@@ -34,7 +34,7 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
             foodQueryHasExpired.find().then(function(results) {
                 for (var i = 0; i < results.length; i++) {
                     var object = results[i].get("product_name");
-                    console.log(object);
+                    console.log("Adding to hasExpired: " + object);
                     hasExpired.push(object);
                     console.log("HasExpired Length: " + hasExpired.length);
                 }
@@ -42,7 +42,7 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
             }).then(function(results) {
                 for (var i = 0; i < results.length; i++) {
                     var object = results[i].get("product_name");
-                    console.log(object);
+                    console.log("Adding to willExpire: " + object);
                     willExpire.push(object);
                 }
                 var promise = Parse.promise.as();
