@@ -31,73 +31,66 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
             foodQueryWillExpire.greaterThan("expiration_date", now);
             foodQueryWillExpire.lessThan("expiration_date", expireDate);
 
-            foodQueryHasExpired.find({
-                success: function(results) {
-                             console.log("" + results.length);
-                             for (var i = 0; i < results.length; i++) {
-                                 var object = results[i].get("product_name");
-                                 console.log(object);
-                                 hasExpired.push(object);
-                                 console.log("HasExpired Length: " + hasExpired.length);
-                             }
-                         },
-                error: function(error) {
-                           // Do nothing
-                       }
-            });
-
-            foodQueryWillExpire.find({
-                success: function(results) {
-                             console.log("" + results.length);
-                             for (var i = 0; i < results.length; i++) {
-                                 var object = results[i].get("product_name");
-                                 console.log(object);
-                                 willExpire.push(object);
-                             }
-                         },
-                error: function(error) {
-                           // Do nothing
-                       }
-            });
-            var message = "";
-            if (hasExpired.length > 0) {
-                console.log("Adding hasExpired");
-                message = message + "Expired: ";
-                for (var i = 0; i < hasExpired.length - 1; i++) {
-                    message = message + hasExpired[i] + ", ";
+            foodQueryHasExpired.find().then(function(results) {
+                for (var i = 0; i < results.length; i++) {
+                    var object = results[i].get("product_name");
+                    console.log(object);
+                    hasExpired.push(object);
+                    console.log("HasExpired Length: " + hasExpired.length);
                 }
-                if (hasExpired.length > 1) {
-                    message = message + "and ";
+                return foodQueryWillExpire.find();
+            }).then(function(results) {
+                for (var i = 0; i < results.length; i++) {
+                    var object = results[i].get("product_name");
+                    console.log(object);
+                    willExpire.push(object);
                 }
-                message = message + hasExpired[hasExpired.length - 1] + ". ";
-            }
-            if (willExpire.length > 0) {
-                message = message + "Expiring Soon: ";
-                for (var i = 0; i < willExpire.length - 1; i++) {
-                    message = message + willExpire[i] + ", ";
-                }
-                if (willExpire.length > 1) {
-                    message = message + "and ";
-                }
-                message = message + willExpire[willExpire.length - 1] + ". ";
-            }
-            console.log("Message: " +  message);
-            if (message !== "") {
-                console.log("BEGIN SENDING PUSH");
-                var pushQuery = new Parse.Query(Parse.Installation);
-                pushQuery.equalTo("deviceType", "android");
-                pushQuery.equalTo("user", user);
-                Parse.Push.send({
-                    where: pushQuery,
-                    data: {
-                        alert: message
+                var promise = Parse.promise.as();
+                promise = promise.then(function() {
+                    var message = "";
+                    if (hasExpired.length > 0) {
+                        console.log("Adding hasExpired");
+                        message = message + "Expired: ";
+                        for (var i = 0; i < hasExpired.length - 1; i++) {
+                            message = message + hasExpired[i] + ", ";
+                        }
+                        if (hasExpired.length > 1) {
+                          message = message + "and ";
+                        }
+                        message = message + hasExpired[hasExpired.length - 1] + ". ";
                     }
-                }, { success: function() {
-                    console.log("PUSH OK");
-                }, error: function(error) {
-                    console.log("PUSH ERROR: " + error.message);
-                }, useMasterKey: true});
-            }
+                    if (willExpire.length > 0) {
+                        message = message + "Expiring Soon: ";
+                        for (var i = 0; i < willExpire.length - 1; i++) {
+                            message = message + willExpire[i] + ", ";
+                        }
+                        if (willExpire.length > 1) {
+                            message = message + "and ";
+                        }
+                        message = message + willExpire[willExpire.length - 1] + ". ";
+                    }
+                    console.log("Message: " +  message);
+                    if (message !== "") {
+                        console.log("BEGIN SENDING PUSH");
+                        var pushQuery = new Parse.Query(Parse.Installation);
+                        pushQuery.equalTo("deviceType", "android");
+                        pushQuery.equalTo("user", user);
+                        Parse.Push.send({
+                            where: pushQuery,
+                            data: {
+                                alert: message
+                            }
+                        }, { success: function() {
+                              console.log("PUSH OK");
+                        }, error: function(error) {
+                              console.log("PUSH ERROR: " + error.message);
+                        }, useMasterKey: true});
+                    }
+                });
+                return promise;
+            }).then(function() {
+              // Push sent
+            });
         }
     });
     response.success("success");
