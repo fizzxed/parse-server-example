@@ -3,95 +3,54 @@ var kue = require('kue');
 // create our job queue
 var jobs = kue.createQueue({ redis: process.env.REDIS_URL });
 
-
-
 Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
-    var query = new Parse.Query(Parse.User); // Query for all users
+    // Query for all users
+    var query = new Parse.Query(Parse.User);
+    // Only want users with push enabled
+    query.equalTo("push", true);
+    // Setup Arrays to hold information
+    var hasExpired = [];
+    var willExpire = [];
     // For each user in database
     query.each(function(user) {
-        var hasPushOn = user.get('push');
-        console.log("Getting Push stuff");
-        // Only execute if user has push setting on
-        if (hasPushOn === true) {
-            console.log(user.get("name") + " has push enabled");
-            var hasExpired = [];
-            var willExpire = [];
-            // Current Date
+        console.log(user.get("name") + " has push enabled. ");
+        // We want to do two promises in parallel
+        var promises = [];
+        var promiseHas = Parse.Promise.as();
+        promiseHas = promiseHas.then(function() {
+            // return a promise that will be resolved
             var now = new Date();
-            // Create Date limit
-            var offset = user.get('warning_offset');
+            var hasExpiredQuery = new Parse.Query("Food");
+            hasExpiredQuery.equalTo("owner", user);
+            hasExpiredQuery.lessThan("expiration_date", now);
+            return hasExpiredQuery.each(function(food) {
+                var object = food.get("product_name");
+                hasExpired.push(object);
+            });
+        });
+        promises.push(promiseHas);
+        var promiseWill = Parse.Promise.as();
+        promiseWill = promiseWill.then(function() {
+            // return a promise that will be resolved
+            var now = new Date();
+            var offset = user.get("warning_offset");
             var expireDate = new Date(now);
             expireDate.setDate(expireDate.getDate() + offset);
-            var foodQueryHasExpired = new Parse.Query("Food");
-            foodQueryHasExpired.equalTo("owner", user);
-            foodQueryHasExpired.lessThan("expiration_date", now);
-
-            var foodQueryWillExpire = new Parse.Query("Food");
-            foodQueryWillExpire.equalTo("owner", user);
-            foodQueryWillExpire.greaterThan("expiration_date", now);
-            foodQueryWillExpire.lessThan("expiration_date", expireDate);
-
-            foodQueryHasExpired.find().then(function(results) {
-                for (var i = 0; i < results.length; i++) {
-                    var object = results[i].get("product_name");
-                    console.log("Adding to hasExpired: " + object);
-                    hasExpired.push(object);
-                    console.log("HasExpired Length: " + hasExpired.length);
-                }
-                return foodQueryWillExpire.find();
-            }).then(function(results) {
-                for (var i = 0; i < results.length; i++) {
-                    var object = results[i].get("product_name");
-                    console.log("Adding to willExpire: " + object);
-                    willExpire.push(object);
-                }
-                var promise = Parse.promise.as();
-                promise = promise.then(function() {
-                    var message = "";
-                    if (hasExpired.length > 0) {
-                        console.log("Adding hasExpired");
-                        message = message + "Expired: ";
-                        for (var i = 0; i < hasExpired.length - 1; i++) {
-                            message = message + hasExpired[i] + ", ";
-                        }
-                        if (hasExpired.length > 1) {
-                          message = message + "and ";
-                        }
-                        message = message + hasExpired[hasExpired.length - 1] + ". ";
-                    }
-                    if (willExpire.length > 0) {
-                        message = message + "Expiring Soon: ";
-                        for (var i = 0; i < willExpire.length - 1; i++) {
-                            message = message + willExpire[i] + ", ";
-                        }
-                        if (willExpire.length > 1) {
-                            message = message + "and ";
-                        }
-                        message = message + willExpire[willExpire.length - 1] + ". ";
-                    }
-                    console.log("Message: " +  message);
-                    if (message !== "") {
-                        console.log("BEGIN SENDING PUSH");
-                        var pushQuery = new Parse.Query(Parse.Installation);
-                        pushQuery.equalTo("deviceType", "android");
-                        pushQuery.equalTo("user", user);
-                        Parse.Push.send({
-                            where: pushQuery,
-                            data: {
-                                alert: message
-                            }
-                        }, { success: function() {
-                              console.log("PUSH OK");
-                        }, error: function(error) {
-                              console.log("PUSH ERROR: " + error.message);
-                        }, useMasterKey: true});
-                    }
-                });
-                return promise;
-            }).then(function() {
-              // Push sent
+            var willExpireQuery = new Parse.Query("Food");
+            willExpireQuery.equalTo("owner", user);
+            willExpireQuery.greaterThan("expiration_date", now);
+            willExpireQuery.lessThan("expiration_date", expireDate);
+            return hasExpiredQuery.each(function(food) {
+                var object = food.get("product_name");
+                willExpire.push(object);
             });
-        }
+        });
+        promises.push(promiseWill);
+        return Parse.Promise.when(promises, user);
+    }).then(function(promiseResults, user) {
+        // Everything is now added to willExpire and hasExpired
+        console.log(user.get("name"));
+
     });
     response.success("success");
 });
