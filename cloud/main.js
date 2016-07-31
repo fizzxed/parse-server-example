@@ -92,7 +92,7 @@ function sendPush(user, message) {
                 alert: message
             }
         }, { success: function() {
-              console.log("Sent push to " + user.get("name")));
+              console.log("Sent push to " + user.get("name"));
         }, error: function(error) {
               console.log("Push failed for " + user.get("name")
                         + " with error: " + error.message);
