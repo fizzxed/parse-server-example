@@ -19,6 +19,7 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
         var promiseHas = Parse.Promise.as();
         promiseHas = promiseHas.then(function() {
             // return a promise that will be resolved
+            console.log("Has promise execute");
             var now = new Date();
             var hasExpiredQuery = new Parse.Query("Food");
             hasExpiredQuery.equalTo("owner", user);
@@ -32,6 +33,7 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
         var promiseWill = Parse.Promise.as();
         promiseWill = promiseWill.then(function() {
             // return a promise that will be resolved
+            console.log("Will promise execute");
             var now = new Date();
             var offset = user.get("warning_offset");
             var expireDate = new Date(now);
@@ -42,6 +44,7 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
             willExpireQuery.lessThan("expiration_date", expireDate);
             return hasExpiredQuery.each(function(food) {
                 var object = food.get("product_name");
+                console.log("Added product to hasExpired");
                 willExpire.push(object);
             });
         });
@@ -49,6 +52,7 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
         return Parse.Promise.when(promises, user);
     }).then(function(promiseResults, user) {
         // Everything is now added to willExpire and hasExpired
+        console.log("promises fulfilled");
         console.log(user.get("name"));
 
     });
