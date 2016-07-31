@@ -38,6 +38,8 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
                 hasExpired.push(object);
             });
             return willExpireQuery.find();
+        }, function(error) {
+            console.log("Error 1: " + error.message);
         }).then(function(foods) {
             console.log("Will promise execute");
             _.each(foods, function(food) {
@@ -50,6 +52,8 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
                 console.log("Execute inner body of promise");
             })
             return promise;
+        }, function(error) {
+            console.log("Error 2: " + error.message);
         }).then(function() {
             console.log("Execute outer body");
             response.success("success");
