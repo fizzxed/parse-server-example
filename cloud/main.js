@@ -12,6 +12,7 @@ var job = jobs.createJob("foodAlert", {})
               .backoff( {delay: 60*1000, type:"fixed"})
               .priority("high")
               .unique("foodAlert");
+
 jobs.every("1 minute", job);
 
 Parse.Cloud.define('alertPush', function(request, response) {
@@ -71,7 +72,7 @@ Parse.Cloud.define('alertPush', function(request, response) {
     });
 });
 
-var jobs.process("foodAlert", function(job, done) {
+jobs.process("foodAlert", function(job, done) {
     console.log("Triggerred");
     done();
 })
