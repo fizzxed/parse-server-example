@@ -11,12 +11,15 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
     var query = new Parse.Query(Parse.User);
     // Only want users with push enabled
     query.equalTo("push", true);
-    // Setup Arrays to hold information
-    var hasExpired = [];
-    var willExpire = [];
+    var promises = [];
     // For each user in database
     query.each(function(user) {
         console.log(user.get("name") + " has push enabled. ");
+
+        // Setup Arrays to hold information
+        var hasExpired = [];
+        var willExpire = [];
+
         // Define the dates here
         var now = new Date();
         var offset = user.get("warning_offset");
@@ -32,35 +35,34 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
         willExpireQuery.greaterThan("expiration_date", now);
         willExpireQuery.lessThan("expiration_date", expireDate);
 
-        // Execute queries and promises
-        hasExpiredQuery.find().then(function(foods) {
-            console.log("Has promise execute");
-            _.each(foods, function(food) {
-                var object = food.get("product_name");
-                console.log("Added product to hasExpired");
-                hasExpired.push(object);
-            });
-            return willExpireQuery.find();
-        }, function(error) {
-            console.log("Error 1: " + error.message);
-        }).then(function(foods) {
-            console.log("Will promise execute");
-            _.each(foods, function(food) {
-                var object = food.get("product_name");
-                console.log("added product to willExpire");
-                willExpire.push(object);
-            });
-            var promise = Parse.Promise.as();
-            promise = promise.then(function() {
-                console.log("Execute inner body of promise");
+        // Execute queries as promises
+        promises.push(hasExpiredQuery.find().then(function(foods) {
+                console.log("Has promise execute");
+                _.each(foods, function(food) {
+                    var object = food.get("product_name");
+                    console.log("Added product to hasExpired");
+                    hasExpired.push(object);
+                });
+                return willExpireQuery.find();
+            }, function(error) {
+                console.log("Error at Has Expired: " + error.message);
+            }).then(function(foods) {
+                console.log("Will promise execute");
+                _.each(foods, function(food) {
+                    var object = food.get("product_name");
+                    console.log("added product to willExpire");
+                    willExpire.push(object);
+                });
+                return Parse.Promise.as();
+            }, function(error) {
+                console.log("Error at Will Expire: " + error.message);
+            }).then(function() {
+                console.log("Execute outer body");
             })
-            return promise;
-        }, function(error) {
-            console.log("Error 2: " + error.message);
-        }).then(function() {
-            console.log("Execute outer body");
-            response.success("success");
-        });
+        );
+        return Parse.Promise.when(promises);
+    }).then(function() {
+        response.success("success");
     });
 });
 
