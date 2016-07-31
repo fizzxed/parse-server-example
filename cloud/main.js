@@ -14,10 +14,9 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
     // For each user in database
     query.each(function(user) {
         console.log(user.get("name") + " has push enabled. ");
-        // We want to do two promises in parallel
-        var promises = [];
-        var promiseHas = Parse.Promise.as();
-        promiseHas = promiseHas.then(function() {
+        // Chainging promises
+        var promise = Parse.Promise.as();
+        promise = promise.then(function() {
             // return a promise that will be resolved
             console.log("Has promise execute");
             var now = new Date();
@@ -55,6 +54,9 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
         }).then(function() {
             console.log("promises fulfilled");
         });
+        return promise;
+    }).then(function() {
+        console.log("Got to finish of query.each");
     });
     response.success("success");
 });
