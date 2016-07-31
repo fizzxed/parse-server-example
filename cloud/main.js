@@ -1,11 +1,11 @@
-
+// If uploading to Heroku use RedisCloud as the redis server,
+// The other services don't work with kue-scheduler.
 // Define _
 var _ = require("underscore");
 // Define kue
 var kue = require('kue-scheduler');
 // create our job queue
 var jobs = kue.createQueue({ redis: process.env.REDISCLOUD_URL });
-
 // Scheduled using kue-scheduler
 var job = jobs.createJob("foodAlert", {})
               .attempts(3)
@@ -13,7 +13,7 @@ var job = jobs.createJob("foodAlert", {})
               .priority("high")
               .unique("foodAlert");
 
-jobs.every("5 minutes", job);
+jobs.every("30 minutes", job);
 
 Parse.Cloud.define('alertPush', function(request, response) {
     // Query for all users
@@ -23,12 +23,9 @@ Parse.Cloud.define('alertPush', function(request, response) {
     var promises = [];
     // For each user in database
     query.each(function(user) {
-        console.log(user.get("name") + " has push enabled. ");
-
         // Setup Arrays to hold information
         var hasExpired = [];
         var willExpire = [];
-
         // Define the dates here
         var now = new Date();
         var offset = user.get("warning_offset");
@@ -38,12 +35,10 @@ Parse.Cloud.define('alertPush', function(request, response) {
         var hasExpiredQuery = new Parse.Query("Food");
         hasExpiredQuery.equalTo("owner", user);
         hasExpiredQuery.lessThan("expiration_date", now);
-
         var willExpireQuery = new Parse.Query("Food");
         willExpireQuery.equalTo("owner", user);
         willExpireQuery.greaterThan("expiration_date", now);
         willExpireQuery.lessThan("expiration_date", expireDate);
-
         // Execute queries as promises
         promises.push(hasExpiredQuery.find().then(function(foods) {
                 _.each(foods, function(food) {
@@ -73,12 +68,13 @@ Parse.Cloud.define('alertPush', function(request, response) {
 });
 
 jobs.process("foodAlert", function(job, done) {
-    console.log("Triggered foodAlert");
+    console.log("Automatic trigger alertPush");
     Parse.Cloud.run("alertPush", {}).then(function(result) {
         console.log(result);
+        console.log("Automatic alertPush success");
         done();
     }, function(error) {
-        console.log("ERROR AT SCHEDULED JOB: " + error.message);
+        console.log("Automatic alertPush failed with error: " + error.message);
         done(err);
     });
 })
@@ -96,9 +92,10 @@ function sendPush(user, message) {
                 alert: message
             }
         }, { success: function() {
-              console.log("PUSH OK");
+              console.log("Sent push to " + user.get("name")));
         }, error: function(error) {
-              console.log("PUSH ERROR: " + error.message);
+              console.log("Push failed for " + user.get("name")
+                        + " with error: " + error.message);
         }, useMasterKey: true});
     }
 }
