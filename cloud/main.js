@@ -13,7 +13,7 @@ var job = jobs.createJob("foodAlert", {})
               .priority("high")
               .unique("foodAlert");
 
-jobs.every("2 hours", job);
+jobs.every("5 minutes", job);
 
 Parse.Cloud.define('alertPush', function(request, response) {
     // Query for all users
@@ -76,10 +76,11 @@ jobs.process("foodAlert", function(job, done) {
     console.log("Triggered foodAlert");
     Parse.Cloud.run("alertPush", {}).then(function(result) {
         console.log(result);
+        done();
     }, function(error) {
         console.log("ERROR AT SCHEDULED JOB: " + error.message);
+        done(err);
     });
-    done();
 })
 
 
