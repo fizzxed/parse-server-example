@@ -41,12 +41,16 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
             willExpireQuery.lessThan("expiration_date", expireDate);
             return willExpireQuery.find();
         }).then(function(foods) {
+            console.log("Will promise execute");
             _.each(foods, function(food) {
                 var object = food.get("product_name");
                 console.log("added product to willExpire");
                 willExpire.push(object);
             });
             var promiseToPush = Parse.Promise.as();
+            promiseToPush = promiseToPush.then(function() {
+                console.log("Got to promise to push body");
+            })
             return promiseToPush;
         }).then(function() {
             console.log("promises fulfilled");
