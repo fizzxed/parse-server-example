@@ -58,6 +58,8 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
                 console.log("Error at Will Expire: " + error.message);
             }).then(function() {
                 console.log("Execute outer body");
+                var message = formatPush(hasExpired, willExpire);
+                sendPush(user, message);
             })
         );
         return Parse.Promise.when(promises);
@@ -66,6 +68,50 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
     });
 });
 
+
+function sendPush(user, message) {
+    if (message !== "") {
+        console.log("BEGIN SENDING PUSH");
+        var pushQuery = new Parse.Query(Parse.Installation);
+        pushQuery.equalTo("deviceType", "android");
+        pushQuery.equalTo("user", user);
+        Parse.Push.send({
+            where: pushQuery,
+            data: {
+                alert: message
+            }
+        }, { success: function() {
+              console.log("PUSH OK");
+        }, error: function(error) {
+              console.log("PUSH ERROR: " + error.message);
+        }, useMasterKey: true});
+    }
+}
+
+function formatPush(hasExpired, willExpire) {
+    var message = "";
+    if (hasExpired.length > 0) {
+        message = message + "Expired: ";
+        for (var i = 0; i < hasExpired.length - 1; i++) {
+            message = message + hasExpired[i] + ", ";
+        }
+        if (hasExpired.length > 1) {
+          message = message + "and ";
+        }
+        message = message + hasExpired[hasExpired.length - 1] + ". ";
+    }
+    if (willExpire.length > 0) {
+        message = message + "Expiring Soon: ";
+        for (var i = 0; i < willExpire.length - 1; i++) {
+            message = message + willExpire[i] + ", ";
+        }
+        if (willExpire.length > 1) {
+            message = message + "and ";
+        }
+        message = message + willExpire[willExpire.length - 1] + ". ";
+    }
+    return message;
+}
 
 
 // Push with promises
