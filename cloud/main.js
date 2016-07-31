@@ -2,11 +2,19 @@
 // Define _
 var _ = require("underscore");
 // Define kue
-var kue = require('kue');
+var kue = require('kue-scheduler');
 // create our job queue
 var jobs = kue.createQueue({ redis: process.env.REDIS_URL });
 
-Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
+// Scheduled using kue-scheduler
+var job = jobs.createJob("foodAlert", {})
+              .attempts(3)
+              .backoff( {delay: 60*1000, type:"fixed"})
+              .priority("high")
+              .unique("foodAlert");
+jobs.every("1 minute", job);
+
+Parse.Cloud.define('alertPush', function(request, response) {
     // Query for all users
     var query = new Parse.Query(Parse.User);
     // Only want users with push enabled
@@ -37,27 +45,22 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
 
         // Execute queries as promises
         promises.push(hasExpiredQuery.find().then(function(foods) {
-                console.log("Has promise execute");
                 _.each(foods, function(food) {
                     var object = food.get("product_name");
-                    console.log("Added product to hasExpired");
                     hasExpired.push(object);
                 });
                 return willExpireQuery.find();
             }, function(error) {
-                console.log("Error at Has Expired: " + error.message);
+                console.log("Error at Has Expired Promise: " + error.message);
             }).then(function(foods) {
-                console.log("Will promise execute");
                 _.each(foods, function(food) {
                     var object = food.get("product_name");
-                    console.log("added product to willExpire");
                     willExpire.push(object);
                 });
                 return Parse.Promise.as();
             }, function(error) {
-                console.log("Error at Will Expire: " + error.message);
+                console.log("Error at Will Expire Promise: " + error.message);
             }).then(function() {
-                console.log("Execute outer body");
                 var message = formatPush(hasExpired, willExpire);
                 sendPush(user, message);
             })
@@ -67,6 +70,11 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
         response.success("success");
     });
 });
+
+var jobs.process("foodAlert", function(job, done) {
+    console.log("Triggerred");
+    done();
+})
 
 
 function sendPush(user, message) {
