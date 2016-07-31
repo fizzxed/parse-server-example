@@ -52,9 +52,9 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
             return promise;
         }).then(function() {
             console.log("Execute outer body");
+            response.success("success");
         });
     });
-    response.success("success");
 });
 
 
