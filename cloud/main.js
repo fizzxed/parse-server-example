@@ -14,30 +14,29 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
     // For each user in database
     query.each(function(user) {
         console.log(user.get("name") + " has push enabled. ");
-        // Chainging promises
-        var promise = Parse.Promise.as();
-        promise = promise.then(function() {
-            // return a promise that will be resolved
+        // Define the dates here
+        var now = new Date();
+        var offset = user.get("warning_offset");
+        var expireDate = new Date(now);
+        expireDate.setDate(expireDate.getDate() + offset);
+        // Define the Queries here
+        var hasExpiredQuery = new Parse.Query("Food");
+        hasExpiredQuery.equalTo("owner", user);
+        hasExpiredQuery.lessThan("expiration_date", now);
+
+        var willExpireQuery = new Parse.Query("Food");
+        willExpireQuery.equalTo("owner", user);
+        willExpireQuery.greaterThan("expiration_date", now);
+        willExpireQuery.lessThan("expiration_date", expireDate);
+
+        // Execute queries and promises
+        hasExpiredQuery.find().then(function(foods) {
             console.log("Has promise execute");
-            var now = new Date();
-            var hasExpiredQuery = new Parse.Query("Food");
-            hasExpiredQuery.equalTo("owner", user);
-            hasExpiredQuery.lessThan("expiration_date", now);
-            return hasExpiredQuery.find();
-        }).then(function(foods) {
             _.each(foods, function(food) {
                 var object = food.get("product_name");
                 console.log("Added product to hasExpired");
                 hasExpired.push(object);
             });
-            var now = new Date();
-            var offset = user.get("warning_offset");
-            var expireDate = new Date(now);
-            expireDate.setDate(expireDate.getDate() + offset);
-            var willExpireQuery = new Parse.Query("Food");
-            willExpireQuery.equalTo("owner", user);
-            willExpireQuery.greaterThan("expiration_date", now);
-            willExpireQuery.lessThan("expiration_date", expireDate);
             return willExpireQuery.find();
         }).then(function(foods) {
             console.log("Will promise execute");
@@ -46,17 +45,14 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
                 console.log("added product to willExpire");
                 willExpire.push(object);
             });
-            var promiseToPush = Parse.Promise.as();
-            promiseToPush = promiseToPush.then(function() {
-                console.log("Got to promise to push body");
+            var promise = Parse.Promise.as();
+            promise = promise.then(function() {
+                console.log("Execute inner body of promise");
             })
-            return promiseToPush;
+            return promise;
         }).then(function() {
-            console.log("promises fulfilled");
+            console.log("Execute outer body");
         });
-        return promise;
-    }).then(function() {
-        console.log("Got to finish of query.each");
     });
     response.success("success");
 });
