@@ -1,4 +1,7 @@
 
+// Define _
+var _ = require("underscore");
+// Define kue
 var kue = require('kue');
 // create our job queue
 var jobs = kue.createQueue({ redis: process.env.REDIS_URL });
