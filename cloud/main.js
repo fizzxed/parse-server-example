@@ -4,9 +4,7 @@ var _ = require("underscore");
 // Define kue
 var kue = require('kue-scheduler');
 // create our job queue
-var jobs = kue.createQueue({ redis: process.env.REDIS_URL,
-                             skipconfig: true // needed because of Heroku Redis
-                           });
+var jobs = kue.createQueue({ redis: process.env.REDISCLOUD_URL });
 
 // Scheduled using kue-scheduler
 var job = jobs.createJob("foodAlert", {})
