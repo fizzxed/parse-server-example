@@ -24,16 +24,13 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
             var hasExpiredQuery = new Parse.Query("Food");
             hasExpiredQuery.equalTo("owner", user);
             hasExpiredQuery.lessThan("expiration_date", now);
-            return hasExpiredQuery.each(function(food) {
+            return hasExpiredQuery.find();
+        }).then(function(foods) {
+            _.each(foods, function(food) {
                 var object = food.get("product_name");
+                console.log("Added product to hasExpired");
                 hasExpired.push(object);
             });
-        });
-        promises.push(promiseHas);
-        var promiseWill = Parse.Promise.as();
-        promiseWill = promiseWill.then(function() {
-            // return a promise that will be resolved
-            console.log("Will promise execute");
             var now = new Date();
             var offset = user.get("warning_offset");
             var expireDate = new Date(now);
@@ -42,19 +39,18 @@ Parse.Cloud.define('alertAllWithPushOn', function(request, response) {
             willExpireQuery.equalTo("owner", user);
             willExpireQuery.greaterThan("expiration_date", now);
             willExpireQuery.lessThan("expiration_date", expireDate);
-            return hasExpiredQuery.each(function(food) {
+            return willExpireQuery.find();
+        }).then(function(foods) {
+            _.each(foods, function(food) {
                 var object = food.get("product_name");
-                console.log("Added product to hasExpired");
+                console.log("added product to willExpire");
                 willExpire.push(object);
             });
+            var promiseToPush = Parse.Promise.as();
+            return promiseToPush;
+        }).then(function() {
+            console.log("promises fulfilled");
         });
-        promises.push(promiseWill);
-        return Parse.Promise.when(promises, user);
-    }).then(function(promiseResults, user) {
-        // Everything is now added to willExpire and hasExpired
-        console.log("promises fulfilled");
-        console.log(user.get("name"));
-
     });
     response.success("success");
 });
